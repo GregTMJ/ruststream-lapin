@@ -429,4 +429,16 @@ path = "examples/manual/guide/publishing.rs"
 required-features = ["testing"]
 test = true
 
+[[example]]
+name = "guide_rpc"
+path = "examples/guide/rpc.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_guide_rpc"
+path = "examples/manual/guide/rpc.rs"
+required-features = ["testing"]
+test = true
+
 # --- examples: architecture ---
