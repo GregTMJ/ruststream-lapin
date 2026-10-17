@@ -102,6 +102,7 @@ impl MessageHeaders for Report {
 #[cfg(test)]
 mod tests {
     use std::error::Error;
+    use std::process;
 
     use ruststream::testing::TestApp;
     use ruststream_lapin::prelude::*;
@@ -109,11 +110,11 @@ mod tests {
 
     use super::{Order, Report, app, live};
 
-    /// Asks the service for `count` reports at once.
+    /// Asks the service for `count` reports at once, queued into `queue`.
     #[derive(Debug, PartialEq, Deserialize, Serialize, Outgoing)]
-    #[outgoing(name = "docs.prefetch.bursts")]
     struct Burst {
         count: u64,
+        queue: String,
     }
 
     /// A report queued for rendering; the publish names the queue.
@@ -132,7 +133,7 @@ mod tests {
         for id in 0..request.count {
             if reports
                 .message(&Queued { id })
-                .to("docs.prefetch.reports")
+                .to(&request.queue)
                 .publish()
                 .await
                 .is_err()
@@ -152,12 +153,19 @@ mod tests {
         HandlerOutcome::ack()
     }
 
-    /// The windowed queue against `uri`, declared by the service.
-    fn windowed(uri: String) -> impl App {
+    /// The windowed queue against `uri`, declared by the service under the names of one run, so
+    /// two runs on one server never share a queue.
+    fn windowed(uri: String, run: &str) -> impl App {
+        let bursts = RabbitQueue::new(format!("docs.prefetch.bursts-{run}")).auto_delete(true);
+        let reports = RabbitQueue::new(format!("docs.prefetch.reports-{run}"))
+            .auto_delete(true)
+            .prefetch(nonzero!(2));
         let broker = LapinBroker::new(uri).declare_topology(true);
         RustStream::new(AppInfo::new("reports", "0.1.0")).with_broker(broker, |b| {
-            b.include(burst).out(Reports, Publish::default()).build();
-            b.include(render_batch.batch(nonzero!(10)));
+            b.include(burst.map_source(|_| bursts))
+                .out(Reports, Publish::default())
+                .build();
+            b.include(render_batch.map_source(|_| reports).batch(nonzero!(10)));
         })
     }
 
@@ -190,15 +198,21 @@ mod tests {
         let Some(uri) = live::url("AMQP_TEST_URL") else {
             return Ok(());
         };
-        let tb = TestApp::start_live(windowed(uri)).await?;
+        let run = process::id().to_string();
+        let reports = format!("docs.prefetch.reports-{run}");
+        let tb = TestApp::start_live(windowed(uri, &run)).await?;
         tb.broker::<LapinBroker>()
-            .message(&Burst { count: 5 })
+            .message(&Burst {
+                count: 5,
+                queue: reports.clone(),
+            })
+            .to(format!("docs.prefetch.bursts-{run}"))
             .publish()
             .await?;
 
         let batches = tb
             .broker::<LapinBroker>()
-            .subscriber("docs.prefetch.reports")
+            .subscriber(&reports)
             .batches::<Queued>();
         let sizes: Vec<usize> = batches.iter().map(Vec::len).collect();
         assert_eq!(sizes.iter().sum::<usize>(), 5, "{sizes:?}");
