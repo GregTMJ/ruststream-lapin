@@ -123,7 +123,7 @@ AMQP 没有单条消息的延迟。
 原始消息在副本于同一信道上发布之后才被确认，所以两者之间出现故障时，这笔退款会重复，而不会丢失。
 副本是一条新消息，所以它带着加一后的重试次数，上限像结束立即重试的循环一样结束延迟重试的循环。
 
-经典的等待队列只从队头释放消息。
+等待队列只从队头释放消息。
 延迟长的消息会挡住排在它后面的每条消息，所以延迟长短不一时，每种延迟各用一个等待队列，用 [`Delay::dlx_ttl_named`](api:ruststream_lapin::Delay::dlx_ttl_named) 命名。
 `plugin-dme` feature 加入 [`Delay::plugin_dme`](../components/settlement/plugin-dme.md)，它在 RabbitMQ 的延迟消息交换机插件中等待，在那里短延迟从不排在长延迟后面。
 
