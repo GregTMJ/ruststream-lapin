@@ -20,8 +20,8 @@ The waiting queue is `<queue>.retry`; [`Delay::dlx_ttl_named`](api:ruststream_la
 The released copy is a new message to the server, and it carries `x-ruststream-retry-count` raised by one.
 So a [retry cap](./retries.md) ends a delayed loop the way it ends an immediate one.
 
-A classic waiting queue releases expired messages only from its head, so a short delay waits behind a long one.
-Mixed delays take one waiting queue per delay class, a quorum waiting queue, or the [delayed-message plugin](./plugin-dme.md).
+A waiting queue releases expired messages only from its head, so a short delay waits behind a long one.
+Mixed delays take one waiting queue per delay class, or the [delayed-message plugin](./plugin-dme.md).
 
 The waiting queue is infrastructure.
 With [`declare_topology(true)`](api:ruststream_lapin::LapinBroker::declare_topology) the service declares it: durable, dead-lettering to the origin queue.

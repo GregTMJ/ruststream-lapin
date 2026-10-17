@@ -122,7 +122,7 @@ The copy waits in the queue `refunds.retry` under a per-message TTL, and the wai
 The original is acknowledged after the copy is published on the same channel, so a failure between the two duplicates the refund rather than losing it.
 The copy is a new message, so it carries the retry count raised by one, and the cap ends a delayed loop as it ends an immediate one.
 
-A classic waiting queue releases messages only from its head.
+A waiting queue releases messages only from its head.
 A message with a long delay holds back every message behind it, so mixed delays want one waiting queue per delay, named with [`Delay::dlx_ttl_named`](api:ruststream_lapin::Delay::dlx_ttl_named).
 The `plugin-dme` feature adds [`Delay::plugin_dme`](../components/settlement/plugin-dme.md), which waits in RabbitMQ's delayed-message-exchange plugin, where a short delay never waits behind a long one.
 
