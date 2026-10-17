@@ -1,4 +1,9 @@
-# Брокер RabbitMQ
+---
+sidebar_position: 1
+description: "Установка ruststream-lapin, брокера RabbitMQ для RustStream: модель транспорта, совместимости и каркас сервиса."
+---
+
+# Начало работы
 
 `ruststream-lapin` запускает сервис RustStream на RabbitMQ поверх [`lapin`](https://docs.rs/lapin),
 клиента AMQP 0.9.1. Очередь RabbitMQ - разрушающее хранилище: подтверждённая доставка уходит из
@@ -29,15 +34,9 @@ serde = { version = "1", features = ["derive"] }
 `Publish`, `TransactionalPublish` и `Request` - псевдонимы для `LapinPublish`, `ConfirmsPublish` и
 `LapinRequest`.
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_quickstart.rs:handler"
-```
+Первый сервис - один обработчик на одной очереди и приложение вокруг него: скомпилированный пример [`lapin_quickstart`](https://github.com/powersemmi/ruststream-lapin/blob/main/crates/ruststream-lapin/examples/lapin_quickstart.rs).
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_quickstart.rs:app"
-```
-
-## Модель транспорта {#the-transport-model}
+## Модель транспорта {/* #the-transport-model */}
 
 - Подписка читает одну очередь. `#[subscriber("orders")]` читает очередь `orders`, а дескриптор
   [`RabbitQueue`][subscribing] добавляет привязки, типы очередей и предвыборку. Пакетный обработчик
@@ -54,7 +53,7 @@ serde = { version = "1", features = ["derive"] }
 - На брокере ничего не объявляется, пока вы не включите это через `.declare_topology(true)`:
   топологией управляете вы.
 
-## Совместимости {#capabilities}
+## Совместимости {/* #capabilities */}
 
 Какие из необязательных трейтов-совместимостей фреймворка этот брокер реализует нативно:
 
@@ -69,7 +68,7 @@ serde = { version = "1", features = ["derive"] }
 | `Seekable` + `Positioned` | нет | Очередь не хранит историю, в которую можно было бы вернуться. |
 | `DescribeServer` | да | Сообщает хост подключения и версию AMQP за ним, и именно это записывает документ AsyncAPI. См. [Документ AsyncAPI](https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#the-asyncapi-document). |
 
-## Каркас сервиса {#scaffold-a-service}
+## Каркас сервиса {/* #scaffold-a-service */}
 
 Сгенерируйте работающую заготовку через
 [`cargo generate`](https://github.com/cargo-generate/cargo-generate), по одному шаблону на форму
@@ -80,7 +79,7 @@ cargo generate --git https://github.com/powersemmi/ruststream-lapin templates/am
 cargo generate --git https://github.com/powersemmi/ruststream-lapin templates/amqp-topic
 ```
 
-## Документация {#documentation}
+## Документация {/* #documentation */}
 
 Крейт документирует себя на docs.rs, и этот обзор и есть руководство:
 
@@ -95,7 +94,7 @@ cargo generate --git https://github.com/powersemmi/ruststream-lapin templates/am
   пробелы.
 
 Установка, учебник и остальные брокеры - на сайте RustStream:
-<https://powersemmi.github.io/ruststream/>.
+[powersemmi.github.io/ruststream](https://powersemmi.github.io/ruststream/latest/ru/).
 
 [subscribing]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#subscribing
 [batches]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#batches

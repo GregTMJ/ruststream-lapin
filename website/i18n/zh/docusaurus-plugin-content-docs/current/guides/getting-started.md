@@ -1,4 +1,9 @@
-# RabbitMQ Broker
+---
+sidebar_position: 1
+description: "安装 RustStream 的 RabbitMQ Broker ruststream-lapin，了解它的传输模型、能力和服务骨架。"
+---
+
+# 快速开始
 
 `ruststream-lapin` 通过 AMQP 0.9.1 客户端 [`lapin`](https://docs.rs/lapin) 把 RustStream 服务跑在
 RabbitMQ 上。RabbitMQ 队列是销毁式存储：一次投递一经确认就离开队列。确认、重新入队和进死信都是
@@ -24,15 +29,9 @@ serde = { version = "1", features = ["derive"] }
 家族统一的挂载点名字：`Publish`、`TransactionalPublish` 和 `Request`，分别是 `LapinPublish`、
 `ConfirmsPublish` 和 `LapinRequest` 的别名。
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_quickstart.rs:handler"
-```
+第一个服务就是一条队列上的一个处理器，再加上包住它的应用：编译过的示例[`lapin_quickstart`](https://github.com/powersemmi/ruststream-lapin/blob/main/crates/ruststream-lapin/examples/lapin_quickstart.rs)。
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_quickstart.rs:app"
-```
-
-## 传输模型 { #the-transport-model }
+## 传输模型 {/* #the-transport-model */}
 
 - 一个订阅消费一个队列。`#[subscriber("orders")]` 消费名为 `orders` 的队列，
   [`RabbitQueue`][subscribing] 描述符再补上绑定、队列类型和预取。批量处理器在挂载点写出批次大小；
@@ -44,7 +43,7 @@ serde = { version = "1", features = ["derive"] }
   算作一次用掉的投递，所以处理器的重试会消耗仲裁队列自己的上限。
 - 除非你用 `.declare_topology(true)` 显式开启，否则 Broker 上什么都不声明：拓扑由你自己管理。
 
-## 能力 { #capabilities }
+## 能力 {/* #capabilities */}
 
 本 Broker 原生实现了框架的哪些可选能力 trait：
 
@@ -59,7 +58,7 @@ serde = { version = "1", features = ["derive"] }
 | `Seekable` + `Positioned` | 否 | 队列不保留历史，无处可回。 |
 | `DescribeServer` | 是 | 报告连接的主机以及它背后的 AMQP 版本，AsyncAPI 文档记录的就是它。参见 [AsyncAPI 文档](https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#the-asyncapi-document)。 |
 
-## 生成服务骨架 { #scaffold-a-service }
+## 生成服务骨架 {/* #scaffold-a-service */}
 
 用 [`cargo generate`](https://github.com/cargo-generate/cargo-generate) 生成一个跑得起来的起步
 项目，一种消息形态一个模板：
@@ -69,7 +68,7 @@ cargo generate --git https://github.com/powersemmi/ruststream-lapin templates/am
 cargo generate --git https://github.com/powersemmi/ruststream-lapin templates/amqp-topic
 ```
 
-## 文档 { #documentation }
+## 文档 {/* #documentation */}
 
 crate 在 docs.rs 上给自己写文档，那份概览就是指南：
 
@@ -82,7 +81,7 @@ crate 在 docs.rs 上给自己写文档，那份概览就是指南：
 - [运维][operations] - TLS、连接设置、按需声明和已知缺口。
 
 安装、教程和其他 Broker 在 RustStream 站点上：
-<https://powersemmi.github.io/ruststream/>。
+[powersemmi.github.io/ruststream](https://powersemmi.github.io/ruststream/latest/zh/)。
 
 [subscribing]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#subscribing
 [batches]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#batches

@@ -1,4 +1,9 @@
-# RabbitMQ broker
+---
+sidebar_position: 1
+description: "Install ruststream-lapin, the RabbitMQ broker for RustStream, and meet its transport model, capabilities and service scaffolds."
+---
+
+# Getting started
 
 `ruststream-lapin` runs a RustStream service on RabbitMQ over [`lapin`](https://docs.rs/lapin),
 the AMQP 0.9.1 client. A RabbitMQ queue is destructive storage: a delivery leaves the queue once
@@ -29,13 +34,8 @@ framework's prelude with it. It adds the family's uniform mount-site names: `Pub
 `TransactionalPublish` and `Request`, aliases for `LapinPublish`, `ConfirmsPublish` and
 `LapinRequest`.
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_quickstart.rs:handler"
-```
-
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_quickstart.rs:app"
-```
+A first service is one handler on one queue and the app around it: the compiled example
+[`lapin_quickstart`](https://github.com/powersemmi/ruststream-lapin/blob/main/crates/ruststream-lapin/examples/lapin_quickstart.rs).
 
 ## The transport model
 
@@ -91,7 +91,7 @@ The crate documents itself on docs.rs, and that overview is the guide:
 - [Operations][operations] - TLS, connection settings, opt-in declaration, known gaps.
 
 Installation, the tutorial and the other brokers are on the RustStream site:
-<https://powersemmi.github.io/ruststream/>.
+[powersemmi.github.io/ruststream](https://powersemmi.github.io/ruststream/latest/).
 
 [subscribing]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#subscribing
 [batches]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#batches
