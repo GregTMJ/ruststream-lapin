@@ -395,6 +395,83 @@ path = "examples/manual/lapin_settlement_plugin_dme.rs"
 required-features = ["testing", "plugin-dme"]
 test = true
 
+[[example]]
+name = "lapin_publishing_publish"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_publishing_publish"
+path = "examples/manual/lapin_publishing_publish.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_publishing_exchange"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_publishing_exchange"
+path = "examples/manual/lapin_publishing_exchange.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_publishing_headers"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_publishing_headers"
+path = "examples/manual/lapin_publishing_headers.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_publishing_properties"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_publishing_properties"
+path = "examples/manual/lapin_publishing_properties.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_publishing_priority"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_publishing_priority"
+path = "examples/manual/lapin_publishing_priority.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_publishing_expiration"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_publishing_expiration"
+path = "examples/manual/lapin_publishing_expiration.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_publishing_persistent"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_publishing_persistent"
+path = "examples/manual/lapin_publishing_persistent.rs"
+required-features = ["testing"]
+test = true
+
 # --- examples: comp-c ---
 
 [[example]]
