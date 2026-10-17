@@ -96,6 +96,83 @@ required-features = ["plugin-consistent-hash"]
 
 # --- examples: comp-a ---
 
+[[example]]
+name = "lapin_broker_service"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_broker_service"
+path = "examples/manual/lapin_broker_service.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_broker_connection"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_broker_connection"
+path = "examples/manual/lapin_broker_connection.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_broker_tls"
+required-features = ["testing", "tls-rustls-ring"]
+test = true
+
+[[example]]
+name = "manual_lapin_broker_tls"
+path = "examples/manual/lapin_broker_tls.rs"
+required-features = ["testing", "tls-rustls-ring"]
+test = true
+
+[[example]]
+name = "lapin_broker_declare_topology"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_broker_declare_topology"
+path = "examples/manual/lapin_broker_declare_topology.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_broker_shutdown"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_broker_shutdown"
+path = "examples/manual/lapin_broker_shutdown.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_broker_prelude"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_broker_prelude"
+path = "examples/manual/lapin_broker_prelude.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_broker_errors"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_broker_errors"
+path = "examples/manual/lapin_broker_errors.rs"
+required-features = ["testing"]
+test = true
+
 # --- examples: comp-b ---
 
 # --- examples: comp-c ---
