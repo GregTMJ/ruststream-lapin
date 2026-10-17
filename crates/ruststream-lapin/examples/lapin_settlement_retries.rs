@@ -42,8 +42,7 @@ fn app() -> impl App {
     let broker = LapinBroker::new("amqp://localhost:5672");
     RustStream::new(AppInfo::new("payments", "0.1.0")).with_broker(broker, |b| {
         // Three deliveries, the first included, then the payment goes to `payments.dead`. The
-        // copies leave through the confirms policy, so a copy the broker did not take fails the
-        // settlement instead of vanishing.
+        // copies leave through the confirms policy, which waits for the broker to confirm each.
         b.include(charge)
             .max_attempts(nonzero!(3u32))
             .dead_letter("payments.dead")
