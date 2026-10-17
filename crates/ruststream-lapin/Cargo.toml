@@ -64,36 +64,6 @@ tokio = { workspace = true }
 [package.metadata.docs.rs]
 all-features = true
 
-# The lapin_* examples are the docs-site snippet sources; keep them runnable and snippet-checked.
-[[example]]
-name = "lapin_quickstart"
-
-[[example]]
-name = "lapin_topology"
-
-[[example]]
-name = "lapin_transactions"
-
-[[example]]
-name = "lapin_priority"
-
-[[example]]
-name = "lapin_rpc_server"
-
-[[example]]
-name = "lapin_rpc_client"
-
-[[example]]
-name = "lapin_keyed_lanes"
-
-[[example]]
-name = "lapin_testing"
-required-features = ["testing"]
-
-[[example]]
-name = "lapin_consistent_hash"
-required-features = ["plugin-consistent-hash"]
-
 # --- examples: comp-a ---
 
 [[example]]
