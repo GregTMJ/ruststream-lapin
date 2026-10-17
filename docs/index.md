@@ -17,12 +17,10 @@ same `#[ruststream::app]` macro as any other broker. The runtime connects the br
 startup, before opening subscriptions; connecting consumes the broker and yields
 `ConnectedLapinBroker`, the only value carrying a subscribe or publish surface.
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_quickstart.rs:handler"
+```rust reference="examples/lapin_quickstart.rs#handler"
 ```
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_quickstart.rs:app"
+```rust reference="examples/lapin_quickstart.rs#app"
 ```
 
 ## The transport model

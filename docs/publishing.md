@@ -38,8 +38,7 @@ guarantee changes the type:
   `tx.rollback`): messages become visible atomically at commit. Slower (a synchronous round trip
   per commit), but the only option when partial flushes are unacceptable.
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_transactions.rs:confirms"
+```rust reference="examples/lapin_transactions.rs#confirms"
 ```
 
 The trade-off: confirms give per-message durability (a failed commit may leave earlier messages
@@ -50,12 +49,10 @@ published), server transactions give all-or-nothing visibility.
 Attach the policy at the mount site and the handler receives the live publisher as an `Out`
 parameter. Here an order fans out into per-item shipment commands, published all-or-nothing:
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_transactions.rs:dispatch"
+```rust reference="examples/lapin_transactions.rs#dispatch"
 ```
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_transactions.rs:handler"
+```rust reference="examples/lapin_transactions.rs#handler"
 ```
 
 Both transactional publishers implement the framework's `TransactionalPublisher`, so either
