@@ -133,4 +133,4 @@ cargo test
 AMQP_TEST_URL=amqp://127.0.0.1:5672 cargo test -- --test-threads=1
 ```
 
-The RabbitMQ of [Getting started](getting-started.md) is enough for the live run.
+One local RabbitMQ is enough for the live run.
