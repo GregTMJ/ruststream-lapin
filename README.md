@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <b><a href="https://powersemmi.github.io/ruststream-lapin/">Documentation</a></b>
+  <b><a href="https://powersemmi.github.io/ruststream-lapin/latest/">Documentation</a></b>
 </p>
 
 ---
@@ -128,8 +128,13 @@ tb.broker::<LapinBroker>()
 
 ## Documentation
 
-- This crate: <https://docs.rs/ruststream-lapin>
-- The framework: <https://powersemmi.github.io/ruststream/latest>
+- [Getting started](https://powersemmi.github.io/ruststream-lapin/latest/guides/getting-started/) - installation, the transport model and the service scaffolds.
+- [Guides](https://powersemmi.github.io/ruststream-lapin/latest/) - building a RabbitMQ service with the crate.
+- [Components](https://powersemmi.github.io/ruststream-lapin/latest/components/) - one page per part of the crate.
+- [Architecture](https://powersemmi.github.io/ruststream-lapin/latest/architecture/) - how the crate sits between `lapin` and the runtime.
+- [Benchmarks](https://powersemmi.github.io/ruststream-lapin/latest/architecture/benchmarks/) - what the crate costs over the raw client.
+- [API reference](https://docs.rs/ruststream-lapin) - every item on docs.rs, with the crate overview.
+- The framework: <https://powersemmi.github.io/ruststream/latest/>
 
 ## Minimum supported Rust version
 
