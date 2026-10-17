@@ -52,7 +52,7 @@ use crate::error::AmqpError;
 ///     if !order.paid {
 ///         return HandlerOutcome::retry_after(Duration::from_mins(1));
 ///     }
-///     println!("fulfilling order {}", order.id);
+///     tracing::info!(order.id, "fulfilling");
 ///     HandlerOutcome::ack()
 /// }
 ///

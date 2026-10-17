@@ -27,8 +27,31 @@ use crate::subscriber::LapinSubscriber;
 /// mounted here are the broker's, and `out_retry(policy)` does not compile on it - there is no
 /// copy of this process's to publish. A registration declares the pair at the mount site:
 ///
-/// ```text
-/// b.include(charge).max_attempts(nonzero!(3)).dead_letter("orders.dead");
+/// ```
+/// use ruststream_lapin::prelude::*;
+/// use serde::Deserialize;
+///
+/// #[derive(Deserialize)]
+/// struct Payout {
+///     id: u64,
+/// }
+///
+/// #[subscriber(RabbitQuorumQueue::new("payouts"))]
+/// async fn on_payout(payout: &Payout) -> HandlerOutcome {
+///     tracing::warn!(payout.id, "the bank refused, trying again");
+///     HandlerOutcome::retry()
+/// }
+///
+/// fn app() -> RustStream {
+///     let broker = LapinBroker::new("amqp://localhost:5672").declare_topology(true);
+///     RustStream::new(AppInfo::new("payouts", "0.1.0")).with_broker(broker, |b| {
+///         // The server applies this cap: it becomes the queue's delivery limit and dead-letter
+///         // route.
+///         b.include(on_payout)
+///             .max_attempts(nonzero!(5u32))
+///             .dead_letter("payouts.dead");
+///     })
+/// }
 /// ```
 ///
 /// The pair becomes this queue's `x-delivery-limit` and dead-letter route when the broker opts
@@ -58,7 +81,7 @@ use crate::subscriber::LapinSubscriber;
 ///     .dead_letter_exchange("dead-letters")
 ///     .delivery_limit(4))]
 /// async fn take_payment(charge: &Charge) -> HandlerOutcome {
-///     println!("charging {}", charge.id);
+///     tracing::info!(charge.id, "charging");
 ///     HandlerOutcome::retry()
 /// }
 ///
