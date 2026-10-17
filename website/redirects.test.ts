@@ -9,11 +9,7 @@ const docsRoot = path.resolve(__dirname, '../docs');
 // keeps a home. Once the page exists, its entry here goes.
 const awaited = new Set<string>();
 
-// The rustdoc of this checkout (`scripts/site_rustdoc.sh`), which docs.rs renders for the
-// version built.
-const rustdocRoot = path.resolve(__dirname, '../target/doc');
-const docsRs = 'https://docs.rs/ruststream-lapin/0.8/';
-const moved = redirects(docsRs);
+const moved = redirects();
 
 // The site address of every page: its `slug` when the front matter names one, otherwise its path
 // (`a/b.md` and `a/b/index.md` both serve `a/b/`). A page no locale translated is served from the
@@ -43,13 +39,12 @@ describe('redirects', () => {
     expect(moved.benchmarks).toBe('/architecture/benchmarks/');
   });
 
-  it('sends the guides of the old site that moved to docs.rs to the rustdoc of the version built', () => {
-    const rustdoc = 'https://docs.rs/ruststream-lapin/0.8/ruststream_lapin';
-    expect(moved.queues).toBe(`${rustdoc}/index.html#subscribing`);
-    expect(moved.publishing).toBe(`${rustdoc}/index.html#publishing`);
-    expect(moved['request-reply']).toBe(`${rustdoc}/index.html#request-and-reply`);
-    expect(moved.documenting).toBe(`${rustdoc}/index.html#the-asyncapi-document`);
-    expect(moved.testing).toBe(`${rustdoc}/index.html#testing`);
+  it('sends the guides of the old site to the pages that teach the same topic now', () => {
+    expect(moved.queues).toBe('/components/subscriptions/');
+    expect(moved.publishing).toBe('/components/publishing/');
+    expect(moved['request-reply']).toBe('/guides/rpc/');
+    expect(moved.documenting).toBe('/components/asyncapi/');
+    expect(moved.testing).toBe('/guides/testing/');
   });
 
   it('gives every page the old site published a target', () => {
@@ -58,21 +53,9 @@ describe('redirects', () => {
     expect(Object.keys(moved).sort()).toEqual(published);
   });
 
-  it('points every docs.rs target at a page and a section the rustdoc of this checkout has', () => {
-    const external = Object.values(moved).filter((to) => to.startsWith(docsRs));
-    expect(external.length).toBeGreaterThan(0);
-    for (const to of external) {
-      const [file, anchor] = to.slice(docsRs.length).split('#');
-      const html = path.join(rustdocRoot, file);
-      expect(fs.existsSync(html), `${to}: run scripts/site_rustdoc.sh`).toBe(true);
-      if (anchor) expect(fs.readFileSync(html, 'utf8').includes(`id="${anchor}"`), to).toBe(true);
-    }
-  });
-
   it('points every address on the site at a page the build has', () => {
-    const internal = Object.entries(moved).filter(([, to]) => to.startsWith('/'));
-    expect(internal.length).toBeGreaterThan(0);
-    for (const [from, to] of internal) {
+    for (const [from, to] of Object.entries(moved)) {
+      expect(to.startsWith('/'), `${from} -> ${to}`).toBe(true);
       if (awaited.has(to)) {
         expect(page(to), `${to} exists now: drop it from the awaited targets`).toBe(false);
       } else {
