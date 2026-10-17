@@ -318,6 +318,83 @@ test = true
 
 # --- examples: comp-b ---
 
+[[example]]
+name = "lapin_settlement_outcomes"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_settlement_outcomes"
+path = "examples/manual/lapin_settlement_outcomes.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_settlement_dead_letter"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_settlement_dead_letter"
+path = "examples/manual/lapin_settlement_dead_letter.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_settlement_retries"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_settlement_retries"
+path = "examples/manual/lapin_settlement_retries.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_settlement_delivery_limit"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_settlement_delivery_limit"
+path = "examples/manual/lapin_settlement_delivery_limit.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_settlement_retry_after"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_settlement_retry_after"
+path = "examples/manual/lapin_settlement_retry_after.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_settlement_delay"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_settlement_delay"
+path = "examples/manual/lapin_settlement_delay.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_settlement_plugin_dme"
+required-features = ["testing", "plugin-dme"]
+test = true
+
+[[example]]
+name = "manual_lapin_settlement_plugin_dme"
+path = "examples/manual/lapin_settlement_plugin_dme.rs"
+required-features = ["testing", "plugin-dme"]
+test = true
+
 # --- examples: comp-c ---
 
 [[example]]
