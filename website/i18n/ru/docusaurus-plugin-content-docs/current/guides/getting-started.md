@@ -1,106 +1,150 @@
 ---
 sidebar_position: 1
-description: "Установка ruststream-lapin, брокера RabbitMQ для RustStream: модель транспорта, совместимости и каркас сервиса."
+description: "Установка ruststream-lapin, локальный RabbitMQ, первый подписчик на нём и его тест без сервера."
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 # Начало работы
 
-`ruststream-lapin` запускает сервис RustStream на RabbitMQ поверх [`lapin`](https://docs.rs/lapin),
-клиента AMQP 0.9.1. Очередь RabbitMQ - разрушающее хранилище: подтверждённая доставка уходит из
-очереди. Подтверждение, возврат в очередь и отправка в очередь недоставленных сообщений - это кадры
-протокола, поэтому фреймворк завершает сообщение на самом брокере.
+Это руководство устанавливает `ruststream-lapin`, запускает локальный RabbitMQ и первый сервис на нём.
 
-```toml
-ruststream = { version = "0.7", features = ["macros", "json"] }
+## Установка
+
+```toml title="Cargo.toml"
+[dependencies]
+ruststream = { version = "0.7", features = ["macros", "json", "asyncapi", "logging"] }
 ruststream-lapin = "0.7"
 serde = { version = "1", features = ["derive"] }
+tracing = "0.1"
+
+[dev-dependencies]
+ruststream-lapin = { version = "0.7", features = ["testing"] }
+tokio = { version = "1", features = ["macros", "rt"] }
 ```
 
-`LapinBroker::new` не выполняет ввод-вывод, поэтому сервис на RabbitMQ собирается тем же макросом
-`#[ruststream::app]`, что и на любом другом брокере. Рантайм подключает брокер на старте, до
-открытия подписок. Подключение поглощает брокер и возвращает `ConnectedLapinBroker` - единственное
-значение, у которого есть поверхность подписки и публикации.
+`ruststream` - это сам фреймворк. Фича `macros` даёт атрибуты, `json` - кодек по умолчанию, `asyncapi` - документ AsyncAPI сервиса, а `logging` выводит журнал сервиса в терминал.
+`ruststream-lapin` - брокер RabbitMQ на [lapin](https://docs.rs/lapin), клиенте AMQP 0.9.1, написанном на Rust.
+Для сборки не нужно ничего, кроме Cargo.
+Фича `testing` брокера добавляет [RabbitMQ внутри процесса](../components/testing/index.md), на котором работают тесты.
 
-Тело обработчика называет совместимости: `Out<impl Publisher>`, `Out<impl TransactionalPublisher>`,
-`Out<impl RequestReply>`. Оно импортирует только прелюдию фреймворка, и поэтому один и тот же
-обработчик монтируется с любой политикой публикации, которую выберет файл маршрутов. Прелюдию этого
-крейта импортирует одно тело: то, которое меняет
-[свойство AMQP][properties] для одного сообщения. Оно называет тип
-настроек, а не тип издателя - `Out<impl Publisher<Options = LapinPublishOptions>>`, - поэтому
-обработчик по-прежнему не называет издателя.
+У крейта брокера такие фичи:
 
-Файл маршрутов называет значения и импортирует `ruststream_lapin::prelude::*`, который приносит с
-собой прелюдию фреймворка. Он добавляет единые для всего семейства имена точки монтирования:
-`Publish`, `TransactionalPublish` и `Request` - псевдонимы для `LapinPublish`, `ConfirmsPublish` и
-`LapinRequest`.
+| Фича | Что она даёт |
+|---|---|
+| `asyncapi` | [привязки AMQP](../components/asyncapi/index.md) в генерируемом документе AsyncAPI |
+| `testing` | RabbitMQ внутри процесса, на котором работает `TestApp` |
+| `tls-native-tls` | [TLS](../components/broker/tls.md) через TLS-библиотеку платформы |
+| `tls-rustls` | TLS через rustls |
+| `tls-rustls-ring` | TLS через rustls с криптопровайдером `ring` |
+| `plugin-consistent-hash` | [обменник с консистентным хешированием](../components/exchanges/consistent-hash.md) из плагина RabbitMQ |
+| `plugin-dme` | [отложенная переобработка](../components/settlement/plugin-dme.md) через плагин delayed-message-exchange |
 
-Первый сервис - один обработчик на одной очереди и приложение вокруг него: скомпилированный пример [`lapin_quickstart`](https://github.com/powersemmi/ruststream-lapin/blob/main/crates/ruststream-lapin/examples/lapin_quickstart.rs).
+## Локальный RabbitMQ
 
-## Модель транспорта {/* #the-transport-model */}
+Для разработки достаточно одного узла RabbitMQ с веб-интерфейсом управления:
 
-- Подписка читает одну очередь. `#[subscriber("orders")]` читает очередь `orders`, а дескриптор
-  [`RabbitQueue`][subscribing] добавляет привязки, типы очередей и предвыборку. Пакетный обработчик
-  называет свой размер в точке монтирования, и крейт собирает пакет на клиенте, потому что в AMQP
-  нет пакета на уровне протокола; смотрите [Пакеты][batches].
-- На стороне публикации имя сообщения - это ключ маршрутизации, а обменник принадлежит политике
-  публикации: пока вы не назовёте другой, это обменник по умолчанию. Смотрите
-  [Публикацию][publishing].
-- Завершение доставки нативное: `ack` отправляет `basic.ack`, повтор - `basic.reject(requeue = true)`,
-  отбрасывание - `basic.reject(requeue = false)`, который отправляет сообщение в очередь
-  недоставленных, если у очереди задан такой обменник. Отказ - это кадр, который RabbitMQ считает
-  потраченной доставкой, поэтому повтор из обработчика расходует собственный лимит кворумной
-  очереди.
-- На брокере ничего не объявляется, пока вы не включите это через `.declare_topology(true)`:
-  топологией управляете вы.
-
-## Совместимости {/* #capabilities */}
-
-Какие из необязательных трейтов-совместимостей фреймворка этот брокер реализует нативно:
-
-| Совместимость | Нативно | Примечания |
-| --- | --- | --- |
-| `Subscribe` | да | Читает очередь, которую называет подписка; [`RabbitQueue`](https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#subscribing) добавляет привязки, тип очереди и предвыборку. |
-| `BatchSubscriber` | да, на клиенте | AMQP присылает по одному `basic.deliver`, поэтому пакет собирается на клиенте до размера, названного в точке монтирования, в пределах окна предвыборки дескриптора и `batch_wait`. Смотрите [Пакеты](https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#batches). |
-| `TransactionalPublisher` | да | Оба транзакционных издателя: `.confirms()` буферизует на клиенте и при фиксации дожидается каждого подтверждения, `.server_tx()` использует транзакции канала AMQP. Смотрите [Публикацию](https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#publishing). |
-| `OwnedTransactions` | да (только confirms) | Транзакция на подтверждениях - это клиентский буфер, поэтому на одном дескрипторе их может быть открыто сколько угодно. `server_tx` переводит в транзакционный режим сам канал, а это состояние канала, существующее ровно в одном экземпляре. |
-| `RequestReply` | да | `LapinRequest` конструирует запросчика поверх direct reply-to с мультиплексированием по `correlation-id`. Смотрите [Запрос-ответ](https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#request-and-reply). |
-| `Partitioned` | да | Производитель кладёт ключ в заголовок `amqp-partition-key`, и партиции воркеров рантайма читают его; сам AMQP этот заголовок не интерпретирует. Смотрите [Метаданные доставки](https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#delivery-metadata). |
-| `Seekable` + `Positioned` | нет | Очередь не хранит историю, в которую можно было бы вернуться. |
-| `DescribeServer` | да | Сообщает хост подключения и версию AMQP за ним, и именно это записывает документ AsyncAPI. См. [Документ AsyncAPI](https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#the-asyncapi-document). |
-
-## Каркас сервиса {/* #scaffold-a-service */}
-
-Сгенерируйте работающую заготовку через
-[`cargo generate`](https://github.com/cargo-generate/cargo-generate), по одному шаблону на форму
-обмена сообщениями:
+```yaml title="compose.yaml"
+services:
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15672:15672"
+```
 
 ```bash
-cargo generate --git https://github.com/powersemmi/ruststream-lapin templates/amqp-queue
-cargo generate --git https://github.com/powersemmi/ruststream-lapin templates/amqp-topic
+docker compose up -d
 ```
 
-## Документация {/* #documentation */}
+Брокер слушает `localhost:5672`.
+Веб-интерфейс управления открывается по адресу `http://localhost:15672`, пользователь `guest`, пароль `guest`.
+RabbitMQ пускает учётную запись `guest` только с локального адреса, поэтому порты опубликованы на `127.0.0.1`.
 
-Крейт документирует себя на docs.rs, и этот обзор и есть руководство:
+## Первый сервис
 
-- [Подписка][subscribing] - два дескриптора очередей, типы очередей, привязки, предвыборка,
-  предел повторов, отложенная повторная доставка, пакеты и метаданные доставки.
-- [Публикация][publishing] - модель маршрутизации, политики, свойства AMQP для одного сообщения,
-  ответы и транзакции.
-- [Запрос-ответ][request-reply] - RPC поверх direct reply-to.
-- [Документ AsyncAPI][documenting] - привязки AMQP, которые сервис сообщает о себе.
-- [Тестирование][testing] - рабочее приложение под обвязкой `TestApp`, внутри процесса или против живого брокера.
-- [Эксплуатация][operations] - TLS, настройки подключения, объявление по запросу и известные
-  пробелы.
+<Tabs groupId="api">
+<TabItem value="macros" label="Макросы">
 
-Установка, учебник и остальные брокеры - на сайте RustStream:
-[powersemmi.github.io/ruststream](https://powersemmi.github.io/ruststream/latest/ru/).
+```rust title="src/main.rs" reference="examples/guide/getting_started.rs#service"
+```
 
-[subscribing]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#subscribing
-[batches]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#batches
-[publishing]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#publishing
-[properties]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#per-message-properties
-[request-reply]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#request-and-reply
-[documenting]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#the-asyncapi-document
-[testing]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#testing
-[operations]: https://docs.rs/ruststream-lapin/latest/ruststream_lapin/index.html#operations
+</TabItem>
+<TabItem value="manual" label="Вручную">
+
+```rust title="src/main.rs" reference="examples/manual/guide/getting_started.rs#service"
+```
+
+</TabItem>
+</Tabs>
+
+`take_order` читает заказы в JSON из очереди `orders`.
+Заказ с суммой он подтверждает, а заказ без суммы отбрасывает.
+[`LapinBroker::new`](../components/broker/index.md) принимает URI соединения и только запоминает его.
+Соединение открывается при запуске сервиса.
+[`declare_topology(true)`](../components/broker/declare-topology.md) разрешает сервису объявить очереди, которые он читает, поэтому сервис запускается и на пустом RabbitMQ.
+`#[ruststream::app]` превращает `app` в `main`. В ручной форме то же делает [`run_main`](api:ruststream::runtime::cli::run_main).
+
+Запустите сервис:
+
+```bash
+cargo run -- run
+```
+
+Опубликуйте заказ из другого терминала утилитой `rabbitmqadmin`, которая входит в образ:
+
+```bash
+docker compose exec rabbitmq rabbitmqadmin publish message \
+  --routing-key orders --payload '{"id":1,"amount_cents":1250}'
+```
+
+Сообщение уходит в обменник по умолчанию, а он доставляет его в очередь, имя которой совпадает с ключом маршрутизации.
+Сервис пишет в журнал `order taken` с номером заказа.
+То же сообщение можно опубликовать со страницы очереди `orders` в веб-интерфейсе управления.
+<kbd>Ctrl</kbd>+<kbd>C</kbd> останавливает сервис.
+
+Сервис умеет и описать себя:
+
+```bash
+cargo run -- asyncapi gen
+```
+
+Команда выводит документ AsyncAPI сервиса: сервер, канал `orders` и сообщение `Order`.
+
+`cargo generate` создаёт такой же сервис с роутером и ответом:
+
+```bash
+cargo generate --git https://github.com/powersemmi/ruststream-lapin templates/amqp-queue --name my-service
+```
+
+Шаблон `templates/amqp-topic` вместо этого начинает с обменника типа `topic`.
+
+## Первый тест
+
+В файле примера есть и два теста.
+Каждый запускает то же `app` через `TestApp::start`, публикует заказ и проверяет, как `take_order` подтвердил его доставку.
+Там `LapinBroker` подключается к RabbitMQ внутри процесса, поэтому тестам не нужен сервер:
+
+```bash
+cargo test
+```
+
+Руководство [Тестирование сервиса на RabbitMQ](testing.md) разбирает эти тесты и то, что моделирует RabbitMQ внутри процесса.
+
+## Переход с lapin
+
+Сервис на lapin сам открывает каналы и пишет цикл потребителя.
+Вот куда переходит каждая часть в RustStream:
+
+| lapin | RustStream |
+|---|---|
+| `Connection::connect` и `create_channel` | [`LapinBroker::new`](../components/broker/connection.md); рантайм подключается при запуске |
+| `channel.basic_qos` | [`prefetch`](../components/subscriptions/prefetch.md) у брокера или у отдельной очереди |
+| `queue_declare`, `exchange_declare`, `queue_bind` | [дескриптор очереди](../components/subscriptions/rabbit-queue.md) и [`declare_topology(true)`](../components/broker/declare-topology.md) ([Топология](topology.md)) |
+| `basic_consume` и цикл `while let Some(delivery)` | обработчик `#[subscriber]` |
+| десериализация `delivery.data` | тип параметра обработчика, который декодирует кодек |
+| `delivery.ack` и `delivery.reject` | [исход](../components/settlement/index.md) обработчика ([Подтверждения, переобработка и недоставленные сообщения](retries.md)) |
+| `basic_publish` | ответ или параметр `Out`, отправленный через [политику публикации](../components/publishing/index.md) |
+| `confirm_select` и ожидание подтверждений | [`ConfirmsPublish`](../components/transactions/confirms-publish.md) ([Надёжная публикация](publishing.md)) |
+| очередь для ответов и таблица корреляции | [`LapinRequest`](../components/request/index.md) ([Запрос и ответ](rpc.md)) |

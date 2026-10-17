@@ -6,7 +6,7 @@ description: "Руководства по сервисам на RabbitMQ с rust
 
 # Руководства
 
-Крейт `ruststream-lapin` реализует брокер RabbitMQ для [RustStream](https://powersemmi.github.io/ruststream/latest/ru/).
-Он построен на [lapin](https://docs.rs/lapin), клиенте AMQP 0.9.1. Руководства показывают, как
-собрать на нём сервис для RabbitMQ.
+`ruststream-lapin` - брокер RabbitMQ для [RustStream](https://powersemmi.github.io/ruststream/latest/),
+построенный на [lapin](https://docs.rs/lapin), клиенте AMQP 0.9.1. Руководства проводят сервис на
+RabbitMQ от установки до промышленной эксплуатации.
 Начните с руководства [Начало работы](getting-started.md).
