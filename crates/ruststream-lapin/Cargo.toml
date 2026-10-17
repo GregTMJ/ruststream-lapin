@@ -250,6 +250,72 @@ path = "examples/manual/lapin_subscriptions_lanes.rs"
 required-features = ["testing"]
 test = true
 
+[[example]]
+name = "lapin_exchanges_direct"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_exchanges_direct"
+path = "examples/manual/lapin_exchanges_direct.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_exchanges_topic"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_exchanges_topic"
+path = "examples/manual/lapin_exchanges_topic.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_exchanges_fanout"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_exchanges_fanout"
+path = "examples/manual/lapin_exchanges_fanout.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_exchanges_headers"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_exchanges_headers"
+path = "examples/manual/lapin_exchanges_headers.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_exchanges_consistent_hash"
+required-features = ["testing", "plugin-consistent-hash"]
+test = true
+
+[[example]]
+name = "manual_lapin_exchanges_consistent_hash"
+path = "examples/manual/lapin_exchanges_consistent_hash.rs"
+required-features = ["testing", "plugin-consistent-hash"]
+test = true
+
+[[example]]
+name = "lapin_context"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_context"
+path = "examples/manual/lapin_context.rs"
+required-features = ["testing"]
+test = true
+
 # --- examples: comp-b ---
 
 # --- examples: comp-c ---
