@@ -516,6 +516,28 @@ path = "examples/manual/lapin_transactions_owned.rs"
 required-features = ["testing"]
 test = true
 
+[[example]]
+name = "lapin_request_request"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_request_request"
+path = "examples/manual/lapin_request_request.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_request_direct_reply_to"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_request_direct_reply_to"
+path = "examples/manual/lapin_request_direct_reply_to.rs"
+required-features = ["testing"]
+test = true
+
 # --- examples: comp-c ---
 
 [[example]]
