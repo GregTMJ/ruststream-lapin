@@ -173,6 +173,83 @@ path = "examples/manual/lapin_broker_errors.rs"
 required-features = ["testing"]
 test = true
 
+[[example]]
+name = "lapin_subscriptions_queue"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_subscriptions_queue"
+path = "examples/manual/lapin_subscriptions_queue.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_subscriptions_rabbit_queue"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_subscriptions_rabbit_queue"
+path = "examples/manual/lapin_subscriptions_rabbit_queue.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_subscriptions_quorum"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_subscriptions_quorum"
+path = "examples/manual/lapin_subscriptions_quorum.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_subscriptions_prefetch"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_subscriptions_prefetch"
+path = "examples/manual/lapin_subscriptions_prefetch.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_subscriptions_arguments"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_subscriptions_arguments"
+path = "examples/manual/lapin_subscriptions_arguments.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_subscriptions_batches"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_subscriptions_batches"
+path = "examples/manual/lapin_subscriptions_batches.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_subscriptions_lanes"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_subscriptions_lanes"
+path = "examples/manual/lapin_subscriptions_lanes.rs"
+required-features = ["testing"]
+test = true
+
 # --- examples: comp-b ---
 
 # --- examples: comp-c ---
