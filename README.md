@@ -43,7 +43,7 @@ middleware come from the framework; this crate is the transport.
 
 ```toml
 [dependencies]
-ruststream = { version = "0.7", features = ["macros", "json"] }
+ruststream = { version = "0.7", features = ["macros", "json", "asyncapi", "logging"] }
 ruststream-lapin = "0.7"
 serde = { version = "1", features = ["derive"] }
 
@@ -133,7 +133,7 @@ tb.broker::<LapinBroker>()
 - [Components](https://powersemmi.github.io/ruststream-lapin/latest/components/) - one page per part of the crate.
 - [Architecture](https://powersemmi.github.io/ruststream-lapin/latest/architecture/) - how the crate sits between `lapin` and the runtime.
 - [Benchmarks](https://powersemmi.github.io/ruststream-lapin/latest/architecture/benchmarks/) - what the crate costs over the raw client.
-- [API reference](https://docs.rs/ruststream-lapin) - every item on docs.rs, with the crate overview.
+- [API reference](https://docs.rs/ruststream-lapin) - every item on docs.rs; the crate overview maps each topic to its page.
 - The framework: <https://powersemmi.github.io/ruststream/latest/>
 
 ## Minimum supported Rust version

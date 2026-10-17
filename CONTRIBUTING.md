@@ -99,9 +99,9 @@ just plugins-down
 - A pull request merges as one squashed commit, after the `CI result` check and one approving
   review. Commits are signed.
 - Documentation changes with the code. An item's rustdoc says what it is and does, and the crate's
-  module overviews are its guides. The site in `docs/` holds the guides, one page per component
-  and the architecture with the benchmarks, in English, Russian and Chinese (`website/i18n/`), and
-  an edit reaches all three. Its code blocks come from the compiled examples in
+  overview maps each topic to its page on the site. The site in `docs/` holds the guides, one page
+  per component and the architecture with the benchmarks, in English, Russian and Chinese
+  (`website/i18n/`), and an edit reaches all three. Its code blocks come from the compiled examples in
   `crates/ruststream-lapin/examples/`. `scripts/lint_doc_fences.py`,
   `scripts/check_doc_parity.py` and `scripts/check_doc_i18n.py` check the fences and the
   translations.

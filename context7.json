@@ -16,7 +16,7 @@
   ],
   "rules": [
     "Import `ruststream_lapin::prelude::*` in a routes file (it re-exports the framework's prelude); a handler body imports `ruststream::prelude::*` alone, the one exception being a body that adjusts an AMQP property for a single message.",
-    "Subscribe to a classic queue with `#[subscriber(RabbitQueue::new(\"orders\"))]` or the bare `#[subscriber(\"orders\")]`, and to a quorum queue with `RabbitQuorumQueue::new(..)`; neither descriptor has a bare-type form, so write it in full in the attribute.",
+    "Subscribe to a classic queue with the bare `#[subscriber(\"orders\")]` or `#[subscriber(RabbitQueue::new(\"orders\"))]`, and to a quorum queue with `RabbitQuorumQueue::new(..)`; a descriptor with settings is written in full in the attribute.",
     "Cap redeliveries with `.max_attempts(n).dead_letter(name)` after `include`; on a classic queue `.out_retry(policy)` picks the publisher the runtime's copies leave through; on a quorum queue `out_retry` does not compile: the server moves a spent delivery.",
     "Write a per-message AMQP setting as a publish-builder step (`.priority(n)`, `.expiration(ttl)`, `.persistent(flag)`) on a slot bounded `Out<impl Publisher<Options = LapinPublishOptions>, Marker>`, never as a header; policy defaults go at the mount site.",
     "Name the publish policy at the mount site under the family's uniform names: `Publish`, `TransactionalPublish` (publisher confirms, with borrowed and owned transactions), `Request` - and `ServerTxPublish` only where AMQP channel transactions are required.",
