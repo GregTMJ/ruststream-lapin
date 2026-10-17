@@ -36,6 +36,7 @@ The inventory service answers with an ordinary handler that returns its reply.
 The name in `reply("inventory.check.unanswered")` is where a request without a `reply-to` is answered, and what the service's AsyncAPI document reports.
 
 The routes are a [`Router`](api:ruststream::runtime::Router), so the inventory service mounts them with `b.include_router(inventory())` in its own app.
+The example runs both services in one process and mounts both routers.
 
 ## The requester
 
@@ -88,7 +89,7 @@ A RustStream responder with `DirectReplyTo` answers a requester written with ano
 ## Testing
 
 An in-process RabbitMQ belongs to the app that connected it, so the requester and the responder must run in one app to talk.
-The tests mount both routers in one test app, `shop`, and check that an order in stock is accepted and one out of stock is dropped.
-The third test runs the production orders app alone, with a paused clock: nobody answers, the request times out, and the order asks again later.
+The tests start the example's app, which mounts both routers, and check that an order in stock is accepted and one out of stock is dropped.
+The third test mounts the orders router alone, with a paused clock: nobody answers, the request times out, and the order asks again later.
 The in-process RabbitMQ gives every request its own reply address and correlates the reply, as the server does.
 [Testing a RabbitMQ service](testing.md) covers the harness.

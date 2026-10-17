@@ -3,7 +3,8 @@
 //!
 //! ```text
 //! cargo test --example guide_testing --features testing
-//! AMQP_TEST_URL=amqp://127.0.0.1:5672 cargo test --example guide_testing --features testing -- --test-threads=1
+//! AMQP_TEST_URL=amqp://127.0.0.1:5672 \
+//!   cargo test --example guide_testing --features testing -- --test-threads=1
 //! ```
 
 use std::time::Duration;

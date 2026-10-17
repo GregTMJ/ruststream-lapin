@@ -52,7 +52,10 @@ async fn ship_all(
 }
 
 #[subscriber("orders")]
-async fn pack_order(order: &Order, Out(shipments): Out<impl TransactionalPublisher>) -> HandlerOutcome {
+async fn pack_order(
+    order: &Order,
+    Out(shipments): Out<impl TransactionalPublisher>,
+) -> HandlerOutcome {
     match ship_all(shipments, order).await {
         Ok(()) => HandlerOutcome::ack(),
         Err(err) => {

@@ -101,6 +101,9 @@ mod tests {
 
         let started = TestApp::start(service(broker(uri))).await;
 
-        assert!(started.is_err(), "a URI the connection cannot parse must not start");
+        assert!(
+            started.is_err(),
+            "a URI the connection cannot parse must not start"
+        );
     }
 }

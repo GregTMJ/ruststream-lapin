@@ -6,9 +6,9 @@
 //! cargo run --example manual_guide_topology --features testing,ruststream/logging -- run
 //! ```
 
+use std::env;
 use std::future::{Future, ready};
 use std::process::{self, ExitCode};
-use std::env;
 
 use ruststream::runtime::cli::run_main;
 use ruststream::schemars::JsonSchema;

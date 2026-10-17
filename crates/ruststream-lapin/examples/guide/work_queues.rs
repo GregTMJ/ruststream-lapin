@@ -22,7 +22,12 @@ struct Invoice {
 /// Renders one invoice; the invoices of one customer arrive in order on one lane.
 #[subscriber(RabbitQueue::new("invoices"), workers(8, by_key))]
 async fn render_invoice(invoice: &Invoice, Ctx(redelivered): Ctx<Redelivered>) -> HandlerOutcome {
-    tracing::info!(invoice.id, invoice.customer, redelivered, "invoice rendered");
+    tracing::info!(
+        invoice.id,
+        invoice.customer,
+        redelivered,
+        "invoice rendered"
+    );
     HandlerOutcome::ack()
 }
 // --8<-- [end:lanes]

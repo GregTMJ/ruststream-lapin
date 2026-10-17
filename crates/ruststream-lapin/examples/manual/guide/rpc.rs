@@ -139,8 +139,10 @@ fn orders() -> Router<LapinBroker, impl RouterDef<LapinBroker>> {
 
 fn app() -> impl App {
     let broker = LapinBroker::new("amqp://localhost:5672").declare_topology(true);
-    RustStream::new(AppInfo::new("orders", "0.1.0")).with_broker(broker, |b| {
+    // The example runs both services in one process; each service mounts its own router.
+    RustStream::new(AppInfo::new("shop", "0.1.0")).with_broker(broker, |b| {
         b.include_router(orders());
+        b.include_router(inventory());
     })
 }
 
@@ -156,16 +158,14 @@ mod tests {
     use ruststream::testing::TestApp;
     use ruststream_lapin::prelude::*;
 
-    use super::{Order, RETRY, app, inventory, orders};
+    use super::{Order, RETRY, app, orders};
 
-    /// Both services in one app: an in-process RabbitMQ belongs to the app that connected it, so
-    /// the requester and the responder have to share one.
-    fn shop() -> RustStream {
-        RustStream::new(AppInfo::new("shop", "0.1.0")).with_broker(
+    /// The orders service alone, as it is deployed: nobody answers on `inventory.check`.
+    fn orders_alone() -> RustStream {
+        RustStream::new(AppInfo::new("orders", "0.1.0")).with_broker(
             LapinBroker::new("amqp://localhost:5672").declare_topology(true),
             |b| {
                 b.include_router(orders());
-                b.include_router(inventory());
             },
         )
     }
@@ -180,7 +180,7 @@ mod tests {
 
     #[tokio::test]
     async fn an_order_in_stock_is_accepted() -> Result<(), Box<dyn Error>> {
-        let tb = TestApp::start(shop()).await?;
+        let tb = TestApp::start(app()).await?;
 
         tb.broker::<LapinBroker>()
             .message(&order(1, 2))
@@ -201,7 +201,7 @@ mod tests {
 
     #[tokio::test]
     async fn an_order_out_of_stock_is_rejected() -> Result<(), Box<dyn Error>> {
-        let tb = TestApp::start(shop()).await?;
+        let tb = TestApp::start(app()).await?;
 
         tb.broker::<LapinBroker>()
             .message(&order(2, 50))
@@ -219,8 +219,7 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn an_unanswered_order_asks_again_later() -> Result<(), Box<dyn Error>> {
-        // The orders service alone: nobody answers on `inventory.check`.
-        let tb = TestApp::start(app()).await?;
+        let tb = TestApp::start(orders_alone()).await?;
 
         tb.broker::<LapinBroker>()
             .message(&order(3, 2))

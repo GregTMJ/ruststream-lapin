@@ -50,7 +50,12 @@ where
             region: order.region.clone(),
         };
         let key = format!("order.placed.{}", order.region);
-        let sent = outs.get(DefaultSlot).message(&placed).to(&key).publish().await;
+        let sent = outs
+            .get(DefaultSlot)
+            .message(&placed)
+            .to(&key)
+            .publish()
+            .await;
         sent.map_err(|_| HandlerOutcome::retry())
     }
 }
@@ -288,17 +293,18 @@ fn app() -> impl App {
             )
             .build(),
         );
-        b.include(
-            subscriber(RabbitQueue::new("search.prices").bind(prices, ""), Reindex).build(),
-        );
+        b.include(subscriber(RabbitQueue::new("search.prices").bind(prices, ""), Reindex).build());
 
         b.include(subscriber("orders.paid", ShipOrder).build())
             .out(DefaultSlot, Publish::default().exchange("shipments"))
             .build();
         b.include(
             subscriber(
-                RabbitQueue::new("couriers.express")
-                    .bind_with(shipments.clone(), "", gold_in_eu("all")),
+                RabbitQueue::new("couriers.express").bind_with(
+                    shipments.clone(),
+                    "",
+                    gold_in_eu("all"),
+                ),
                 BookExpress,
             )
             .build(),

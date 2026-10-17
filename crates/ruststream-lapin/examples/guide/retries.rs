@@ -75,7 +75,10 @@ struct Refund {
 
 /// Refunds wait out a delay in the broker's waiting queue, `refunds.retry`.
 #[subscriber(RabbitQueue::new("refunds").delay(Delay::dlx_ttl()))]
-async fn process_refund(refund: &Refund, State(processor): State<Arc<Processor>>) -> HandlerOutcome {
+async fn process_refund(
+    refund: &Refund,
+    State(processor): State<Arc<Processor>>,
+) -> HandlerOutcome {
     match processor.refund(&refund.card).await {
         Ok(()) => HandlerOutcome::ack(),
         // Past the rate limit: a delivery right now would be refused again.

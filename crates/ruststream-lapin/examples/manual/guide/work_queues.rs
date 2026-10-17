@@ -37,7 +37,12 @@ impl Handle<Invoice, (), (), AmqpContext> for RenderInvoice {
         ctx: &mut Context<'_, AmqpContext>,
     ) -> impl Future<Output = Result<(), HandlerOutcome>> {
         let redelivered = ctx.context(Redelivered);
-        tracing::info!(invoice.id, invoice.customer, redelivered, "invoice rendered");
+        tracing::info!(
+            invoice.id,
+            invoice.customer,
+            redelivered,
+            "invoice rendered"
+        );
         ready(Ok(()))
     }
 }
