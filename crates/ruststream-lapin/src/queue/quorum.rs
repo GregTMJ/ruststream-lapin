@@ -24,8 +24,8 @@ use crate::subscriber::LapinSubscriber;
 /// A quorum queue counts the deliveries a message has spent and ends a poison loop itself: with
 /// an `x-delivery-limit` and a dead-letter route it carries a message away once its deliveries
 /// run out, whether or not a service is running to count them. So the retries of a registration
-/// mounted here are the broker's, and `out_retry(policy)` does not compile on it - there is no
-/// copy of this process's to publish. A registration declares the pair at the mount site:
+/// mounted here are the broker's, and `out_retry(policy)` does not compile on it: the server moves
+/// the spent message, and the service publishes no copy. A registration declares the pair at the mount site:
 ///
 /// ```
 /// use ruststream_lapin::prelude::*;
@@ -75,7 +75,7 @@ use crate::subscriber::LapinSubscriber;
 /// }
 ///
 /// // A charge the payment provider keeps refusing is moved to `dead-letters` by the server after
-/// // its fourth delivery.
+/// // its fifth delivery: the limit counts the four returns it survives.
 /// #[subscriber(RabbitQuorumQueue::new("charges")
 ///     .bind(RabbitExchange::topic("events"), "charge.*")
 ///     .dead_letter_exchange("dead-letters")
