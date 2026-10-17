@@ -122,6 +122,17 @@ path = "examples/manual/lapin_testing_live.rs"
 required-features = ["testing"]
 test = true
 
+[[example]]
+name = "lapin_asyncapi"
+required-features = ["asyncapi"]
+test = true
+
+[[example]]
+name = "manual_lapin_asyncapi"
+path = "examples/manual/lapin_asyncapi.rs"
+required-features = ["asyncapi"]
+test = true
+
 # --- examples: guides ---
 
 # --- examples: architecture ---
