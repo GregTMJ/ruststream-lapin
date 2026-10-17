@@ -4,8 +4,7 @@ A `RabbitQueue` descriptor names the queue a handler consumes and describes what
 expected to look like: durability, queue type, exchange bindings, prefetch, and raw `x-*`
 arguments. A descriptor sits directly in the `#[subscriber(...)]` decorator:
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_topology.rs:descriptor"
+```rust reference="examples/lapin_topology.rs#descriptor"
 ```
 
 The bare-string form `#[subscriber("orders")]` is shorthand for `RabbitQueue::new("orders")`:
@@ -17,8 +16,7 @@ Descriptors describe the EXPECTED topology. By default nothing is created on the
 missing queue is a subscribe error, because managing infrastructure is the user's job, not the
 framework's. A service that owns its queues opts in per broker:
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_topology.rs:app"
+```rust reference="examples/lapin_topology.rs#app"
 ```
 
 With declaration enabled, subscribing declares the bound exchanges (except the built-in `amq.*`
@@ -57,8 +55,7 @@ parameter (`Ctx(routing_key): Ctx<RoutingKey>` - the key names its context, so n
 parameter is needed), or through a declared `ctx: &mut Context<'_, AmqpContext>` parameter
 with `ctx.context(KEY)`:
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_keyed_lanes.rs:metadata"
+```rust reference="examples/lapin_keyed_lanes.rs#metadata"
 ```
 
 ## Keyed worker lanes
@@ -66,8 +63,7 @@ with `ctx.context(KEY)`:
 A subscription can dispatch across several worker lanes with `workers(n, by_key)`, keeping
 deliveries that share a key on the same lane (ordered per key, parallel across keys):
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_keyed_lanes.rs:consumer"
+```rust reference="examples/lapin_keyed_lanes.rs#consumer"
 ```
 
 The key comes from the `PARTITION_KEY_HEADER` (`amqp-partition-key`): the producer sets it on the
@@ -90,8 +86,7 @@ process, at-most-once over the window). `.delay(..)` makes it native instead: th
 in a broker waiting queue with a per-message TTL and dead-letters back to the origin queue when
 the TTL fires, so the delayed copy lives on the broker.
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_topology.rs:delay"
+```rust reference="examples/lapin_topology.rs#delay"
 ```
 
 The waiting queue (`<queue>.retry` by default, or `Delay::dlx_ttl_named(..)`) is infrastructure:
@@ -114,8 +109,7 @@ the `plugin-consistent-hash` feature exposes `RabbitExchange::consistent_hash(..
 plugin's exchange type. Each queue binds with its integer weight as the routing key, and the
 broker splits the hash space proportionally:
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_consistent_hash.rs:shards"
+```rust reference="examples/lapin_consistent_hash.rs#shards"
 ```
 
 Consistent-hash routing happens on the broker (across queues); it is the server-side counterpart
@@ -127,8 +121,7 @@ RabbitMQ.
 
 Anything the descriptor does not model rides through verbatim:
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_topology.rs:arguments"
+```rust reference="examples/lapin_topology.rs#arguments"
 ```
 
 `AMQPValue` and `FieldTable` are re-exported from the crate for exactly this purpose.

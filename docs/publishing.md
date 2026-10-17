@@ -32,8 +32,7 @@ broker feedback. Upgrade on the publisher when the guarantee matters:
   messages become visible atomically at commit. Slower (a synchronous round trip per commit),
   but the only option when partial flushes are unacceptable.
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_transactions.rs:confirms"
+```rust reference="examples/lapin_transactions.rs#confirms"
 ```
 
 The trade-off in one sentence: confirms give per-message durability (a failed commit may leave
@@ -45,12 +44,10 @@ A publisher is a value like any other shared resource: build it once, wire it in
 application state at startup, and let handlers request it by type (`State<Shipments>` below).
 Here an order fans out into per-item shipment commands, published all-or-nothing:
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_transactions.rs:state"
+```rust reference="examples/lapin_transactions.rs#state"
 ```
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_transactions.rs:handler"
+```rust reference="examples/lapin_transactions.rs#handler"
 ```
 
 Both transactional publishers implement the framework's `TransactionalPublisher`, so either

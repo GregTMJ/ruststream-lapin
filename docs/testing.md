@@ -11,12 +11,10 @@ handlers.
 ruststream-lapin = { version = "0.5", features = ["testing"] }
 ```
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_testing.rs:handler"
+```rust reference="examples/lapin_testing.rs#handler"
 ```
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_testing.rs:testapp"
+```rust reference="examples/lapin_testing.rs#testapp"
 ```
 
 ## What the test broker does not simulate

@@ -14,16 +14,14 @@ and [`lapin_rpc_client`](https://github.com/powersemmi/ruststream-lapin/blob/mai
 matching reply resolves the call. Wrap the raw capability in a small typed client and put it in
 the application state, like any other shared dependency:
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_rpc_client.rs:client"
+```rust reference="examples/lapin_rpc_client.rs#client"
 ```
 
 Handlers then request it by type and call the other service in the middle of their own message
 flow. The RPC timeout is the failure boundary, and it maps straight onto settlement: a business
 answer settles the order, an unreachable service asks for redelivery:
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_rpc_client.rs:handler"
+```rust reference="examples/lapin_rpc_client.rs#handler"
 ```
 
 ## The responder
@@ -32,16 +30,14 @@ The responder is an ordinary `#[subscriber(.., publish(..))]` handler: decode th
 return the reply. `Err` settles without replying, and the requester's timeout is the recovery
 mechanism:
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_rpc_server.rs:handler"
+```rust reference="examples/lapin_rpc_server.rs#handler"
 ```
 
 What makes it an RPC responder is the reply destination. `DirectReplyTo` is a ready-made publish
 transform that sends each reply back to the address the requester asked for and echoes its
 correlation id; compose it onto the reply publisher at mount time:
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_rpc_server.rs:mount"
+```rust reference="examples/lapin_rpc_server.rs#mount"
 ```
 
 The handler stays a pure request-to-reply function, testable in-process like any other.

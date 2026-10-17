@@ -16,12 +16,10 @@ serde = { version = "1", features = ["derive"] }
 same `#[ruststream::app]` macro as any other broker. The runtime connects the broker once at
 startup, before opening subscriptions.
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_quickstart.rs:handler"
+```rust reference="examples/lapin_quickstart.rs#handler"
 ```
 
-```rust
---8<-- "crates/ruststream-lapin/examples/lapin_quickstart.rs:app"
+```rust reference="examples/lapin_quickstart.rs#app"
 ```
 
 ## The transport model
