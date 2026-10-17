@@ -51,4 +51,4 @@ publish settles the delivery as a retry. [Settlement and retries](settlement.md)
 outcome becomes.
 
 What this path costs per message, against the raw lapin client, is on
-[Benchmarks](/architecture/benchmarks/).
+[Benchmarks](benchmarks/index.md).
