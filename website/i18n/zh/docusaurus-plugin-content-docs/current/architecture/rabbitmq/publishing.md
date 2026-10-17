@@ -13,7 +13,7 @@ export const words = {
   "confirms": "发布者确认",
   "transaction": "事务",
   "ffPublish": "basic.publish",
-  "ffDone": ["帧写出", "后即", "返回"],
+  "ffDone": ["帧写出", "后立即", "返回"],
   "confirmSelect": ["confirm.select", "一次"],
   "confirmPublish": "basic.publish",
   "confirmAck": ["每条消息", "收到 basic.ack", "或 basic.nack"],
