@@ -213,7 +213,8 @@ impl ConfirmsPublisher {
         self.channel
             .get(|| async {
                 let channel = conn
-                    .live_connection(target)?
+                    .live_connection(target)
+                    .await?
                     .create_channel()
                     .await
                     .map_err(AmqpError::publish)?;
@@ -516,7 +517,8 @@ impl ServerTxPublisher {
         self.channel
             .get(|| async {
                 let channel = conn
-                    .live_connection(target)?
+                    .live_connection(target)
+                    .await?
                     .create_channel()
                     .await
                     .map_err(AmqpError::publish)?;

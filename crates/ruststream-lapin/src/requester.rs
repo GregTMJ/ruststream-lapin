@@ -219,7 +219,8 @@ impl LapinRequester {
         self.state
             .get(|| async {
                 let channel = conn
-                    .live_connection(target)?
+                    .live_connection(target)
+                    .await?
                     .create_channel()
                     .await
                     .map_err(AmqpError::request)?;

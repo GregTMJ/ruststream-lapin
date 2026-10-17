@@ -710,6 +710,12 @@ process every queue a subscription names is there). The crate's live suites run 
 * One connection carries the service. Each subscription opens a channel of its own, fire-and-forget
   publishes share one channel, and a confirms or server-transaction publisher opens its own on
   first use, because both modes are channel state.
+* A lost connection does not stop the service. When the server restarts, fails over or becomes
+  unreachable, each subscription dials it again and reopens its consumer with the same declaration
+  and prefetch, retrying with a growing pause of up to ten seconds. A publish while the server is
+  down returns an error, and the next one dials again. Deliveries in flight at the loss cannot be
+  settled, and the server delivers them again. An open server transaction is lost with its
+  channel and reports an error.
 * `RabbitMQ` 4 denies transient non-exclusive queues, so a classic queue declared
   `durable(false)` has to be [`exclusive`](RabbitQueue::exclusive) too.
 * The plugin features (`plugin-consistent-hash`, `plugin-dme`) are off by default and need their

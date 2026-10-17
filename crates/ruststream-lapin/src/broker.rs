@@ -14,11 +14,11 @@
 #[cfg(feature = "testing")]
 use std::future::{Future, ready};
 use std::num::NonZeroU16;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex as StdMutex, PoisonError};
 
-use lapin::options::{BasicConsumeOptions, BasicQosOptions};
-use lapin::types::{FieldTable, ShortString};
+use arc_swap::ArcSwap;
+use lapin::types::ShortString;
 #[cfg(feature = "testing")]
 use lapin::uri::AMQPUri;
 use lapin::{Channel, ChannelState, Connection, ConnectionProperties, ConnectionState, ErrorKind};
@@ -30,10 +30,9 @@ use ruststream::{
 #[cfg(feature = "testing")]
 use ruststream::{OutgoingMessage, RawMessage};
 use tokio::runtime::Handle;
+use tokio::sync::Mutex;
 
 use crate::channel::ChannelCell;
-use crate::convert;
-use crate::delay::DelayContext;
 use crate::error::AmqpError;
 #[cfg(feature = "testing")]
 use crate::in_process::{self, Bus};
@@ -42,8 +41,7 @@ use crate::publish_policy::{LapinPublish, LapinPublishPolicy};
 use crate::publish_step::LapinPublishOptions;
 use crate::queue::{QueueDescriptor, RabbitQueue, declared_arguments};
 use crate::requester::{LapinRequest, LapinRequester};
-use crate::subscriber::LapinSubscriber;
-use crate::topology;
+use crate::subscriber::{LapinSubscriber, Subscription};
 
 /// The protocol name the `AsyncAPI` document reports for this crate.
 pub(crate) const PROTOCOL: &str = "amqp";
@@ -57,8 +55,21 @@ pub(crate) const PROTOCOL_VERSION: &str = "0.9.1";
 ///
 /// Held behind an [`Arc`] by the connected broker and by every publisher, requester, and
 /// subscriber paired off it, so they all speak over the same connection.
+///
+/// The connection is dialled again when the one held is gone: a server restart, a failover or a
+/// network cut ends the connection without ending the service, and every handle paired off it
+/// reaches the new one through here.
 pub(crate) struct AmqpConnection {
-    connection: Connection,
+    connection: ArcSwap<Connection>,
+    /// What [`Broker::connect`] dialled with, to dial the same server again.
+    uri: String,
+    properties: ConnectionProperties,
+    /// Held while a new connection is dialled, so callers that found the connection gone at once
+    /// dial it once between them.
+    dialing: Mutex<()>,
+    /// Orders installing a new connection against the shutdown: whichever comes second sees the
+    /// other's work, so a connection dialled while the broker shut down is closed, not leaked.
+    swap: StdMutex<()>,
     publish_channel: ChannelCell<Channel>,
     closed: AtomicBool,
     /// The runtime `connect` ran on. Every task the broker starts runs here, such as a
@@ -67,9 +78,19 @@ pub(crate) struct AmqpConnection {
 }
 
 impl AmqpConnection {
-    fn new(connection: Connection, publish_channel: Channel, runtime: Handle) -> Arc<Self> {
+    fn new(
+        connection: Connection,
+        uri: String,
+        properties: ConnectionProperties,
+        publish_channel: Channel,
+        runtime: Handle,
+    ) -> Arc<Self> {
         Arc::new(Self {
-            connection,
+            connection: ArcSwap::from_pointee(connection),
+            uri,
+            properties,
+            dialing: Mutex::new(()),
+            swap: StdMutex::new(()),
             publish_channel: ChannelCell::holding(publish_channel),
             closed: AtomicBool::new(false),
             runtime,
@@ -81,14 +102,57 @@ impl AmqpConnection {
         &self.runtime
     }
 
-    /// The connection, or [`AmqpError::Closed`] once the broker has shut down.
+    /// The connection, dialled again when the one held is gone, or [`AmqpError::Closed`] once
+    /// the broker has shut down.
     ///
-    /// Why this stays a runtime check: handles paired before the shutdown alias the connection
-    /// and may outlive it, and the typed ladder can only rule out misuse through the owner's
-    /// handle.
-    pub(crate) fn live_connection(&self, target: &str) -> Result<&Connection, AmqpError> {
+    /// Why the shutdown stays a runtime check: handles paired before the shutdown alias the
+    /// connection and may outlive it, and the typed ladder can only rule out misuse through the
+    /// owner's handle.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`AmqpError::Closed`] after shutdown and [`AmqpError::Connect`] when the server
+    /// cannot be reached again.
+    pub(crate) async fn live_connection(&self, target: &str) -> Result<Arc<Connection>, AmqpError> {
         self.ensure_live(target)?;
-        Ok(&self.connection)
+        let current = self.connection.load_full();
+        if current.status().connected() {
+            return Ok(current);
+        }
+        self.reconnect(target).await
+    }
+
+    /// Dials the server again and installs the new connection.
+    async fn reconnect(&self, target: &str) -> Result<Arc<Connection>, AmqpError> {
+        let _dialing = self.dialing.lock().await;
+        self.ensure_live(target)?;
+        // Another caller may have dialled while this one waited for the lock.
+        let current = self.connection.load_full();
+        if current.status().connected() {
+            return Ok(current);
+        }
+        let fresh = Arc::new(
+            Connection::connect(&self.uri, self.properties.clone())
+                .await
+                .map_err(AmqpError::connect)?,
+        );
+        {
+            let _swap = self.swap.lock().unwrap_or_else(PoisonError::into_inner);
+            if !self.is_closed() {
+                self.connection.store(Arc::clone(&fresh));
+                return Ok(fresh);
+            }
+        }
+        // The broker shut down while the dial was in flight: the new connection is nobody's.
+        let _ = fresh.close(200, ShortString::from("OK")).await;
+        Err(AmqpError::closed(target))
+    }
+
+    /// Marks the broker shut down and hands back the connection to close.
+    fn close_for_shutdown(&self) -> Arc<Connection> {
+        let _swap = self.swap.lock().unwrap_or_else(PoisonError::into_inner);
+        self.closed.store(true, Ordering::Release);
+        self.connection.load_full()
     }
 
     /// The shared publish channel, or [`AmqpError::Closed`] once the broker has shut down.
@@ -102,7 +166,8 @@ impl AmqpConnection {
         self.ensure_live(target)?;
         self.publish_channel
             .get(|| async {
-                self.connection
+                self.live_connection(target)
+                    .await?
                     .create_channel()
                     .await
                     .map_err(AmqpError::publish)
@@ -256,7 +321,7 @@ impl Broker for LapinBroker {
         if let Some(name) = &self.connection_name {
             properties = properties.with_connection_name(name.as_str().into());
         }
-        let connection = Connection::connect(&self.uri, properties)
+        let connection = Connection::connect(&self.uri, properties.clone())
             .await
             .map_err(AmqpError::connect)?;
         let publish_channel = connection
@@ -267,6 +332,8 @@ impl Broker for LapinBroker {
         Ok(ConnectedLapinBroker {
             link: Link::Amqp(AmqpConnection::new(
                 connection,
+                self.uri.clone(),
+                properties,
                 publish_channel,
                 Handle::current(),
             )),
@@ -364,49 +431,18 @@ impl ConnectedLapinBroker {
         // and the service should not reach a live consumer with it.
         def.check_retry(self.declare)?;
 
-        let channel = conn
-            .live_connection(&spec.name)?
-            .create_channel()
-            .await
-            .map_err(AmqpError::subscribe)?;
-
-        if self.declare {
-            let arguments = declared_arguments(spec, def.declared_retry());
-            topology::declare(&channel, spec, arguments).await?;
-        }
-        if let Some(prefetch) = spec.prefetch_or(self.prefetch) {
-            channel
-                .basic_qos(prefetch.get(), BasicQosOptions::default())
-                .await
-                .map_err(AmqpError::subscribe)?;
-        }
-
-        let queue = spec.name.clone();
-        // A native delay backend re-publishes the delayed copy on the same channel the delivery is
-        // acked on, so no extra channel is created and the publish orders naturally before the
-        // ack (duplicate-not-loss).
-        let delay = spec
-            .delay
-            .as_ref()
-            .map(|delay| DelayContext::new(channel.clone(), delay.target_for(&queue)));
-
-        let consumer = channel
-            .basic_consume(
-                convert::short(&queue, "queue name")?,
-                ShortString::default(),
-                BasicConsumeOptions::default(),
-                FieldTable::default(),
-            )
-            .await
-            .map_err(AmqpError::subscribe)?;
-
+        let subscription = Subscription {
+            declare: self
+                .declare
+                .then(|| declared_arguments(spec, def.declared_retry())),
+            prefetch: spec.prefetch_or(self.prefetch),
+            spec: spec.clone(),
+        };
+        let consumer = subscription.open(conn).await?;
         Ok(LapinSubscriber::new(
             Arc::clone(conn),
-            channel,
+            subscription,
             consumer,
-            queue,
-            spec.batch_wait,
-            delay,
         ))
     }
 
@@ -477,10 +513,10 @@ impl ConnectedBroker for ConnectedLapinBroker {
         };
         // Marked closed before the handshake: a publisher aliasing the connection must not slip
         // a message into a connection that is already going away.
-        conn.closed.store(true, Ordering::Release);
-        let handshake = conn.connection.status().connected();
+        let connection = conn.close_for_shutdown();
+        let handshake = connection.status().connected();
         if handshake {
-            match conn.connection.close(200, ShortString::from("OK")).await {
+            match connection.close(200, ShortString::from("OK")).await {
                 Ok(()) => {}
                 // A subscriber dropped just before the shutdown is still cancelling its consumer,
                 // and lapin refuses to close a channel it is already closing. The connection is
