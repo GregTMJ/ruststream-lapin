@@ -393,4 +393,16 @@ path = "examples/manual/guide/routing.rs"
 required-features = ["testing"]
 test = true
 
+[[example]]
+name = "guide_topology"
+path = "examples/guide/topology.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_guide_topology"
+path = "examples/manual/guide/topology.rs"
+required-features = ["testing"]
+test = true
+
 # --- examples: architecture ---
