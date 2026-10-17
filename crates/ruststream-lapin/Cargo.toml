@@ -472,6 +472,50 @@ path = "examples/manual/lapin_publishing_persistent.rs"
 required-features = ["testing"]
 test = true
 
+[[example]]
+name = "lapin_transactions_scope"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_transactions_scope"
+path = "examples/manual/lapin_transactions_scope.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_transactions_confirms"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_transactions_confirms"
+path = "examples/manual/lapin_transactions_confirms.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_transactions_server_tx"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_transactions_server_tx"
+path = "examples/manual/lapin_transactions_server_tx.rs"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "lapin_transactions_owned"
+required-features = ["testing"]
+test = true
+
+[[example]]
+name = "manual_lapin_transactions_owned"
+path = "examples/manual/lapin_transactions_owned.rs"
+required-features = ["testing"]
+test = true
+
 # --- examples: comp-c ---
 
 [[example]]
