@@ -93,3 +93,13 @@ required-features = ["testing"]
 [[example]]
 name = "lapin_consistent_hash"
 required-features = ["plugin-consistent-hash"]
+
+# --- examples: comp-a ---
+
+# --- examples: comp-b ---
+
+# --- examples: comp-c ---
+
+# --- examples: guides ---
+
+# --- examples: architecture ---
