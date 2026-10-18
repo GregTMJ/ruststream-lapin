@@ -37,6 +37,8 @@ use crate::delay::DelayContext;
 use crate::error::AmqpError;
 #[cfg(feature = "testing")]
 use crate::in_process::{self, Bus};
+#[cfg(feature = "testing")]
+use crate::live_routes::LiveRoutes;
 use crate::publish_policy::{LapinPublish, LapinPublishPolicy};
 #[cfg(feature = "testing")]
 use crate::publish_step::LapinPublishOptions;
@@ -64,6 +66,10 @@ pub(crate) struct AmqpConnection {
     /// The runtime `connect` ran on. Every task the broker starts runs here, such as a
     /// requester's reply dispatcher, whichever thread makes the request that starts it.
     runtime: Handle,
+    /// What the test harness needs to tell which subscription a publish through an exchange
+    /// reaches.
+    #[cfg(feature = "testing")]
+    routes: LiveRoutes,
 }
 
 impl AmqpConnection {
@@ -73,7 +79,15 @@ impl AmqpConnection {
             publish_channel: ChannelCell::holding(publish_channel),
             closed: AtomicBool::new(false),
             runtime,
+            #[cfg(feature = "testing")]
+            routes: LiveRoutes::default(),
         })
+    }
+
+    /// What this connection saw of publishes, bindings and deliveries through exchanges.
+    #[cfg(feature = "testing")]
+    pub(crate) const fn routes(&self) -> &LiveRoutes {
+        &self.routes
     }
 
     /// The runtime the broker connected on.
@@ -409,8 +423,9 @@ impl ConnectedLapinBroker {
     /// Returns [`AmqpError::Closed`] after shutdown, [`AmqpError::Declare`] when opted-in
     /// declaration fails, [`AmqpError::InvalidOptions`] for contradictory descriptor options and
     /// for a retry declaration this queue cannot carry, and [`AmqpError::Subscribe`] when the
-    /// channel or consumer cannot be opened (for example the queue does not exist and declaration
-    /// was not opted into).
+    /// channel or consumer cannot be opened (for example the queue, or the waiting queue or
+    /// delayed exchange its [`delay`](crate::RabbitQueue::delay) names, does not exist and
+    /// declaration was not opted into).
     pub async fn subscribe(&self, def: impl QueueDescriptor) -> Result<LapinSubscriber, AmqpError> {
         let conn = match &self.link {
             Link::Amqp(conn) => conn,
@@ -440,13 +455,21 @@ impl ConnectedLapinBroker {
         }
 
         let queue = spec.name.clone();
+        #[cfg(feature = "testing")]
+        conn.routes().bound(&queue, &spec.bindings);
         // A native delay backend re-publishes the delayed copy on the same channel the delivery is
         // acked on, so no extra channel is created and the publish orders naturally before the
         // ack (duplicate-not-loss).
-        let delay = spec
-            .delay
-            .as_ref()
-            .map(|delay| DelayContext::new(channel.clone(), delay.target_for(&queue)));
+        let delay = match &spec.delay {
+            Some(delay) => {
+                let target = delay.target_for(&queue);
+                if !self.declare {
+                    target.ensure_exists(&channel, &queue).await?;
+                }
+                Some(DelayContext::new(channel.clone(), target))
+            }
+            None => None,
+        };
 
         let consumer = channel
             .basic_consume(
@@ -634,6 +657,12 @@ impl TestableBroker for ConnectedLapinBroker {
     /// server the pick is the server's and not observable from here, so a live test opens one
     /// subscription per queue.
     ///
+    /// Against a server a publish through a named exchange is owed by the subscriptions whose
+    /// queues the service bound to it: by the binding key on a direct exchange, by the pattern on
+    /// a topic exchange, every one on a fanout exchange. A consistent-hash exchange hands a key to
+    /// the one queue its hash picks, so every bound queue owes the publish until the first
+    /// delivery of that key shows which one took it.
+    ///
     /// # Panics
     ///
     /// Panics against a server when `destination` has more than one subscription: the harness
@@ -647,7 +676,7 @@ impl TestableBroker for ConnectedLapinBroker {
             .collect();
         let turn = match &self.link {
             Link::InProcess(bus) => bus.next_consumer_of(destination),
-            Link::Amqp(_) => {
+            Link::Amqp(conn) => {
                 assert!(
                     candidates.len() <= 1,
                     "queue {destination:?} has {} subscriptions, and RabbitMQ picks which consumer \
@@ -655,7 +684,13 @@ impl TestableBroker for ConnectedLapinBroker {
                      subscription per queue",
                     candidates.len()
                 );
-                Some(0)
+                let mut owed: Vec<usize> = candidates.first().copied().into_iter().collect();
+                for position in conn.routes().through_exchanges(destination, subscriptions) {
+                    if !owed.contains(&position) {
+                        owed.push(position);
+                    }
+                }
+                return owed;
             }
         };
         turn.and_then(|turn| candidates.get(turn).copied())
