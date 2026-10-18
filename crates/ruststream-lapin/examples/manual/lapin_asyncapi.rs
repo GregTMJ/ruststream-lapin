@@ -203,18 +203,26 @@ fn main() -> ExitCode {
 #[cfg(test)]
 mod tests {
     use std::error::Error;
+    use std::hash::{BuildHasher, RandomState};
 
     use ruststream::asyncapi::build_spec;
     use serde_json::{Value, json};
 
     use super::{broker, service};
 
-    const PASSWORD: &str = "hunter2";
+    /// A password no document could hold by coincidence, drawn afresh for every run.
+    fn password() -> String {
+        format!("{:016x}", RandomState::new().hash_one("password"))
+    }
+
+    fn document_with(password: &str) -> Result<Value, Box<dyn Error>> {
+        Ok(serde_json::from_str(
+            &build_spec(&service(broker(password))).to_json()?,
+        )?)
+    }
 
     fn document() -> Result<Value, Box<dyn Error>> {
-        Ok(serde_json::from_str(
-            &build_spec(&service(broker(PASSWORD))).to_json()?,
-        )?)
+        document_with(&password())
     }
 
     /// Asserts that every leaf of `excerpt` stands at the same path in `document`.
@@ -255,9 +263,10 @@ mod tests {
 
     #[test]
     fn the_document_carries_no_credential_and_no_virtual_host() -> Result<(), Box<dyn Error>> {
-        let text = document()?.to_string();
+        let password = password();
+        let text = document_with(&password)?.to_string();
 
-        assert!(!text.contains(PASSWORD), "{text}");
+        assert!(!text.contains(&password), "{text}");
         assert!(!text.contains("/prod"), "{text}");
         Ok(())
     }
